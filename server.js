@@ -1,28 +1,39 @@
-const express = require('express')
-const cors = require("cors");
-const User = require("./model/User")
-const mongoose = require("mongoose")
-const app = express()
+const express = require('express');
+const cors = require('cors');
+const User = require('./model/User');
+const mongoose = require('mongoose');
+const env = require('dotenv');
+const app = express();
 
-app.use(express.json())
-app.use(cors())
+env.config();
 
-mongoose.connect("mongodb+srv://raghubonala1:raghubonala1@cluster0.dvowyb5.mongodb.net/")
+const port = process.env.PORT || 3009;
 
-app.get("/",(req,res)=>{
-    res.json({message:"Api is Loading...."})
-})
+app.use(express.json());
+app.use(cors());
 
-app.post("/submit",async(req,res)=>{
-   try {
-    const {name,email,number,message} = req.body
-   User.create({name,email,number,message})
-   res.json({message:"Data Added"})
-   } catch (error) {
-    res.json({message:"error"})
-   }
-})
+mongoose.connect(process.env.MONGOURL).then(() => {
+    console.log('MongoDB connected');
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
+});
 
-app.listen(3009,()=>{
-    console.log("my server start");
-})
+app.get('/', (req, res) => {
+    res.json({ message: 'API is running...' });
+});
+
+app.post('/submit', async (req, res) => {
+    try {
+        const { name, email, number, message } = req.body;
+        const newUser = new User({ name, email, number, message });
+        await newUser.save();
+        res.json({ message: 'Data Added' });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+app.listen(port, () => {
+    console.log('Server started on port', port);
+});
